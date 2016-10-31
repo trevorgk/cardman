@@ -15,5 +15,17 @@
   "bugs": {
     "url": "https://github.com/trevorgk/cardman/issues"
   },
-  "homepage": "https://github.com/trevorgk/cardman#readme"
+  "homepage": "https://github.com/trevorgk/cardman#readme",
+  "dependencies": {
+    "lodash": "^4.16.5",
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2"
+  },
+  "devDependencies": {
+    "source-map-loader": "^0.1.5",
+    "ts-loader": "^0.9.5",
+    "typescript": "^2.0.6",
+    "webpack": "^1.13.3",
+    "webpack-dev-server": "^1.16.2"
+  }
 }
