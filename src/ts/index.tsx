@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import {CardTable} from './components/CardTable/CardTable'
+import {CardTable} from './components/CardTable'
 
 console.log('here');
 

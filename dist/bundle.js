@@ -21425,9 +21425,220 @@
 
 	"use strict";
 	var React = __webpack_require__(1);
+	var Pile_1 = __webpack_require__(174);
+	var cards_1 = __webpack_require__(173);
 	exports.CardTable = function () {
-	    return (React.createElement("div", null, "la la la"));
+	    var _a = { width: 1000, height: 1000 }, width = _a.width, height = _a.height;
+	    var pack = new cards_1.PackOfCards({ numberOfDecks: 1, numberOfJokers: 2 });
+	    //  hardcode number of players and their positions for now
+	    var hands = pack.deal(4);
+	    var positions = [
+	        { x: width / 2, y: height / 4 },
+	        { x: width / 4 * 3, y: height / 2 },
+	        { x: width / 2, y: height / 4 * 3 },
+	        { x: width / 4, y: height / 2 }
+	    ];
+	    return (React.createElement("div", {style: { backgroundImage: 'url(static/card-table-bg.png)', position: 'relative', width: width + "px", height: height + "px" }}, hands.map(function (hand, index) { return (React.createElement("div", {style: { position: 'absolute', left: positions[index].x + "px", top: positions[index].y + "px" }}, 
+	        React.createElement(Pile_1.default, {layout: 'FannedRight', cards: hand})
+	    )); })));
 	};
+
+
+/***/ },
+/* 173 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var Card = (function () {
+	    function Card(rank, suit) {
+	        var _this = this;
+	        this.rank = rank;
+	        this.suit = suit;
+	        this.show = true;
+	        this.backface = 'static/card_faces/back-purple.png';
+	        this.flip = function () {
+	            _this.show = !_this.show;
+	        };
+	        this.display = function () { return _this.show ? _this.getImageFile() : _this.backface; };
+	        this.toString = function () { return (_this.rank + " of " + _this.suit); };
+	        this.getImageFile = function () { return ("static/card_faces/" + _this.suit + "/" + _this.rank + ".png"); };
+	    }
+	    return Card;
+	}());
+	exports.Card = Card;
+	var PackOfCards = (function () {
+	    function PackOfCards(config) {
+	        var _this = this;
+	        this.cards = [];
+	        //  Based on .NET StrComp.
+	        //  Returns -1, 0, or 1, based on the result of comparison.
+	        this.compareCards = function (cardA, cardB) {
+	            if (cardA.toString() === 'Joker' && cardB.toString() === "Joker")
+	                return 0;
+	            if (cardA.toString() === 'Joker')
+	                return -1;
+	            if (cardB.toString() === 'Joker')
+	                return 1;
+	            var rankA = _this.config.rankOrder.findIndex(function (val) { return val === cardA.rank; });
+	            var rankB = _this.config.rankOrder.findIndex(function (val) { return val === cardB.rank; });
+	            if (rankA > rankB)
+	                return -1;
+	            if (rankA < rankB)
+	                return 1;
+	            var suitA = _this.config.suitOrder.findIndex(function (val) { return val === cardA.suit; });
+	            var suitB = _this.config.suitOrder.findIndex(function (val) { return val === cardB.suit; });
+	            if (suitA > suitB)
+	                return -1;
+	            if (suitA < suitB)
+	                return 1;
+	            return 0;
+	        };
+	        var defaultConfig = {
+	            numberOfDecks: 1,
+	            numberOfJokers: 0,
+	            suitOrder: ["Spades", "Clubs", "Diamonds", "Hearts"],
+	            rankOrder: ["Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace"]
+	        };
+	        this.config = Object.assign({}, defaultConfig, config);
+	        for (var _i = 0, _a = this.config.suitOrder; _i < _a.length; _i++) {
+	            var suit = _a[_i];
+	            for (var _b = 0, _c = this.config.rankOrder; _b < _c.length; _b++) {
+	                var rank = _c[_b];
+	                for (var i = 0; i < this.config.numberOfDecks; i++) {
+	                    this.cards.push(new Card(rank, suit));
+	                }
+	            }
+	        }
+	        for (var i = 0; i < this.config.numberOfJokers; i++) {
+	            this.cards.push(new Joker());
+	        }
+	        this.shuffle();
+	    }
+	    PackOfCards.prototype.shuffle = function () {
+	        for (var i = this.cards.length - 1; i > 0; i--) {
+	            var j = Math.floor(Math.random() * (i + 1));
+	            var swap = this.cards[i];
+	            this.cards[i] = this.cards[j];
+	            this.cards[j] = swap;
+	        }
+	    };
+	    PackOfCards.prototype.deal = function (players, handSize) {
+	        if (handSize === void 0) { handSize = 0; }
+	        var maxPlayers = 4;
+	        if (players < 1 || players > 4) {
+	            throw new Error("Number of players must be between one and four.");
+	        }
+	        if (handSize && players * handSize > this.cards.length) {
+	            throw new Error("Not enough cards in pack for each player");
+	        }
+	        if (!handSize)
+	            handSize = Math.floor(this.cards.length / players);
+	        var hands = [];
+	        for (var i = 0; i < players; i++) {
+	            hands[i] = new Array();
+	        }
+	        for (var i = 0; i < handSize; i++) {
+	            for (var j = 0; j < players; j++) {
+	                hands[j][i] = this.cards.pop();
+	            }
+	        }
+	        return hands;
+	    };
+	    //  consider using _.deepClone for moveCard and swapCard if mutability becomes a concern later
+	    PackOfCards.moveCard = function (cards, indexFrom, indexTo) {
+	        if (indexFrom < 0 || indexTo < 0) {
+	            throw Error("index less than zero");
+	        }
+	        if (indexFrom >= cards.length || indexTo >= cards.length) {
+	            throw Error("index greater than array length");
+	        }
+	        if (indexFrom === indexTo)
+	            return cards;
+	        var card = cards[indexFrom];
+	        cards.splice(indexFrom, 1);
+	        if (indexTo > indexFrom) {
+	            indexTo = indexTo - 1;
+	        }
+	        cards.splice(indexTo, 0, card);
+	        return cards;
+	    };
+	    PackOfCards.swapCards = function (cards, indexLeft, indexRight) {
+	        var swap = cards[indexLeft];
+	        cards[indexLeft] = cards[indexRight];
+	        cards[indexRight] = swap;
+	        return cards;
+	    };
+	    return PackOfCards;
+	}());
+	exports.PackOfCards = PackOfCards;
+	var Joker = (function (_super) {
+	    __extends(Joker, _super);
+	    function Joker() {
+	        _super.call(this, null, null);
+	        this.toString = function () { return 'Joker'; };
+	        this.getImageFile = function () { return "static/card_faces/joker1.png"; };
+	    }
+	    return Joker;
+	}(Card));
+	exports.Joker = Joker;
+
+
+/***/ },
+/* 174 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var React = __webpack_require__(1);
+	var PlayingCard_1 = __webpack_require__(175);
+	var Pile = function (props) {
+	    var cards = props.cards, layout = props.layout;
+	    var pileStyle = {};
+	    var cardStyle = {};
+	    switch (layout) {
+	        case 'Squared':
+	            pileStyle = Object.assign(pileStyle, { position: "relative", width: "80px", height: "112px" });
+	            cardStyle = Object.assign(cardStyle, { position: "absolute" });
+	            break;
+	        case 'FannedRight':
+	            pileStyle = Object.assign(pileStyle, { margin: "0 5px" });
+	            cardStyle = Object.assign(cardStyle, { float: "left", marginLeft: "-65px" });
+	            break;
+	        case 'FannedDown':
+	        default:
+	            pileStyle = Object.assign(pileStyle, { float: "left", paddingTop: "95px" });
+	            cardStyle = Object.assign(cardStyle, {});
+	            break;
+	    }
+	    return (React.createElement("div", {style: pileStyle}, cards && cards.map(function (card, pos) { return (React.createElement(PlayingCard_1.default, {key: pos, card: card, style: Object.assign(cardStyle, { zIndex: pos })})); })));
+	};
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = Pile;
+
+
+/***/ },
+/* 175 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var React = __webpack_require__(1);
+	var PlayingCard = function (props) {
+	    var card = props.card, style = props.style;
+	    var _a = { width: 80, height: 112 }, width = _a.width, height = _a.height;
+	    return (React.createElement("div", {style: {
+	        display: "inline-block"
+	    }, onClick: function () {
+	        console.log(card);
+	    }}, 
+	        React.createElement("img", {style: Object.assign({}, style, { width: width + "px", height: height + "px" }), src: card.display(), alt: card.toString()})
+	    ));
+	};
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = PlayingCard;
 
 
 /***/ }
